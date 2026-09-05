@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title">
+  <title id="title">Fotografía de especie no disponible</title>
+  <rect width="640" height="480" fill="#e7e3d6"/>
+  <g fill="none" stroke="#365b49" stroke-width="2" opacity=".5">
+    <circle cx="320" cy="240" r="120"/><circle cx="320" cy="240" r="72"/>
+    <path d="M320 85v310M165 240h310M210 130l220 220M430 130 210 350"/>
+  </g>
+</svg>
