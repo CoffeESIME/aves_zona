@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import type { AppliedFilters, ExplorerFilters } from '@/src/types/biodiversity';
 
+const sourceSchema = z.enum(['inaturalist', 'gbif']);
+const sourcesSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value),
+  z.array(sourceSchema).min(1).transform((items) => [...new Set(items)]),
+);
+
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.valueOf()) && date.toISOString().startsWith(value);
@@ -16,6 +22,7 @@ export const apiFiltersSchema = z
     radius: radiusSchema,
     taxon: z.enum(['all', 'birds', 'plants', 'insects', 'fungi', 'mammals', 'herps', 'other']),
     quality: z.enum(['research', 'needs_id', 'verifiable']),
+    sources: sourcesSchema,
     from: dateSchema.optional(),
     to: dateSchema.optional(),
   })
@@ -27,6 +34,7 @@ const DEFAULTS: ExplorerFilters = {
   radius: 2,
   taxon: 'all',
   quality: 'research',
+  sources: ['inaturalist', 'gbif'],
   view: 'points',
 };
 
@@ -35,6 +43,7 @@ export function parseApiFilters(searchParams: URLSearchParams): AppliedFilters {
     radius: searchParams.get('radius') ?? DEFAULTS.radius,
     taxon: searchParams.get('taxon') ?? DEFAULTS.taxon,
     quality: searchParams.get('quality') ?? DEFAULTS.quality,
+    sources: searchParams.get('sources') ?? DEFAULTS.sources,
     from: searchParams.get('from') || undefined,
     to: searchParams.get('to') || undefined,
   });
@@ -45,6 +54,7 @@ export function parseExplorerFilters(searchParams: URLSearchParams): ExplorerFil
     radius: searchParams.get('radius') ?? DEFAULTS.radius,
     taxon: searchParams.get('taxon') ?? DEFAULTS.taxon,
     quality: searchParams.get('quality') ?? DEFAULTS.quality,
+    sources: searchParams.get('sources') ?? DEFAULTS.sources,
     from: searchParams.get('from') || undefined,
     to: searchParams.get('to') || undefined,
   });
@@ -60,6 +70,7 @@ export function serializeFilters(filters: ExplorerFilters): string {
   params.set('radius', String(filters.radius));
   params.set('taxon', filters.taxon);
   params.set('quality', filters.quality);
+  params.set('sources', filters.sources.join(','));
   if (filters.from) params.set('from', filters.from);
   if (filters.to) params.set('to', filters.to);
   params.set('view', filters.view);

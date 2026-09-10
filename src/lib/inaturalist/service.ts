@@ -19,6 +19,7 @@ const metaBase = (filters: AppliedFilters, totalAvailable: number, returned: num
   radiusKm: filters.radius,
   filters,
   source: 'iNaturalist' as const,
+  providers: [{ id: 'inaturalist' as const, label: 'iNaturalist', totalAvailable, returned, truncated: returned < totalAvailable }],
   generatedAt: new Date().toISOString(),
   totalAvailable,
   returned,

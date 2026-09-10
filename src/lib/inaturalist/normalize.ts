@@ -28,6 +28,10 @@ export function normalizeObservation(
     geometry: observation.geojson,
     properties: {
       id: observation.id,
+      source: 'inaturalist',
+      sourceLabel: 'iNaturalist',
+      datasetName: 'iNaturalist Research-grade Observations',
+      recordType: 'Observación comunitaria',
       observedOn: observation.observed_on ?? null,
       qualityGrade: observation.quality_grade,
       iconicGroup: iconicTaxonToGroup(taxon?.iconic_taxon_name),
@@ -47,6 +51,8 @@ export function normalizeSpecies(item: RawSpeciesCount): SpeciesItem {
   const photo = item.taxon.default_photo ? licensedPhoto(item.taxon.default_photo) : null;
   return {
     taxonId: item.taxon.id,
+    source: 'inaturalist',
+    sourceLabel: 'iNaturalist',
     commonName: item.taxon.preferred_common_name ?? null,
     scientificName: item.taxon.name,
     iconicGroup: iconicTaxonToGroup(item.taxon.iconic_taxon_name),

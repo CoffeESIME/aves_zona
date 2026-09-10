@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/src/lib/inaturalist/service', () => ({ getObservations: vi.fn() }));
+vi.mock('@/src/lib/providers/service', () => ({ getObservations: vi.fn() }));
 
-import { getObservations } from '@/src/lib/inaturalist/service';
+import { getObservations } from '@/src/lib/providers/service';
 import { GET } from './route';
 import type { ObservationsResponse } from '@/src/types/biodiversity';
 
 const response = {
-  meta: { center: { lat: 19.3525, lng: -99.2824, label: 'UAM' }, radiusKm: 2, filters: { radius: 2, taxon: 'all', quality: 'research' }, source: 'iNaturalist' as const, generatedAt: '', totalAvailable: 0, returned: 0, truncated: false },
+  meta: { center: { lat: 19.3525, lng: -99.2824, label: 'UAM' }, radiusKm: 2, filters: { radius: 2, taxon: 'all', quality: 'research', sources: ['inaturalist'] as const }, source: 'iNaturalist' as const, generatedAt: '', totalAvailable: 0, returned: 0, truncated: false },
   geojson: { type: 'FeatureCollection' as const, features: [] },
 } satisfies ObservationsResponse;
 

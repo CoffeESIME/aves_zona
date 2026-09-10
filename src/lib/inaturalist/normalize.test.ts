@@ -6,7 +6,7 @@ describe('normalización de observaciones', () => {
   it('convierte una observación pública a GeoJSON reducido', () => {
     const feature = normalizeObservation(rawObservation);
     expect(feature?.geometry.coordinates).toEqual([-99.283, 19.353]);
-    expect(feature?.properties).toMatchObject({ iconicGroup: 'birds', commonName: 'Mirlo primavera', photoLicense: 'cc-by-nc' });
+    expect(feature?.properties).toMatchObject({ source: 'inaturalist', sourceLabel: 'iNaturalist', iconicGroup: 'birds', commonName: 'Mirlo primavera', photoLicense: 'cc-by-nc' });
     expect(feature?.properties).not.toHaveProperty('private_location');
   });
 

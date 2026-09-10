@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import { NextResponse } from 'next/server';
 import { INaturalistError } from '@/src/lib/inaturalist/errors';
+import { GBIFError } from '@/src/lib/gbif/errors';
 
 export const CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800';
 
@@ -17,7 +18,7 @@ export function apiError(error: unknown) {
       { status: 400 },
     );
   }
-  if (error instanceof INaturalistError) {
+  if (error instanceof INaturalistError || error instanceof GBIFError) {
     const status = error.kind === 'timeout' ? 504 : 502;
     return NextResponse.json(
       { error: 'No pudimos consultar las observaciones en este momento. Intenta nuevamente más tarde.' },
@@ -31,7 +32,7 @@ export function apiError(error: unknown) {
 }
 
 export function rejectUnknownParams(searchParams: URLSearchParams, extras: string[] = []) {
-  const allowed = new Set(['radius', 'taxon', 'quality', 'from', 'to', ...extras]);
+  const allowed = new Set(['radius', 'taxon', 'quality', 'sources', 'from', 'to', ...extras]);
   const unknown = [...searchParams.keys()].filter((key) => !allowed.has(key));
   if (unknown.length > 0) {
     return NextResponse.json(

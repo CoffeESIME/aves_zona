@@ -37,11 +37,12 @@ export function SpeciesGrid({ data, loading, sort, onSort }: Props) {
               </span>
             </div>
             <div className="species-copy">
+              <span className={`species-source ${species.source}`}>{species.sourceLabel}</span>
               <p>{species.commonName ?? 'Nombre común no disponible'}</p>
               <h3>{species.scientificName}</h3>
               <div className="species-meta">
                 <span>{species.observationCount.toLocaleString('es-MX')} observaciones</span>
-                <a href={species.taxonUrl} target="_blank" rel="noreferrer" aria-label={`Ver ${species.scientificName} en iNaturalist`}><ArrowIcon /></a>
+                <a href={species.taxonUrl} target="_blank" rel="noreferrer" aria-label={`Ver evidencia de ${species.scientificName} en ${species.sourceLabel}`}><ArrowIcon /></a>
               </div>
               {species.photoAttribution && <small>{species.photoAttribution} · {species.photoLicense}</small>}
             </div>

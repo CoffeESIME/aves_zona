@@ -1,6 +1,6 @@
 'use client';
 
-import { RADII, type ExplorerFilters, type RadiusKm, type TaxonFilter } from '@/src/types/biodiversity';
+import { RADII, type DataSource, type ExplorerFilters, type RadiusKm, type TaxonFilter } from '@/src/types/biodiversity';
 import { TAXON_CONFIG } from '@/src/lib/taxonomy';
 
 type Props = {
@@ -18,6 +18,11 @@ function dateBefore(years: number) {
 }
 
 export function FilterPanel({ filters, onChange, disabled }: Props) {
+  const toggleSource = (source: DataSource) => {
+    const enabled = filters.sources.includes(source);
+    if (enabled && filters.sources.length === 1) return;
+    onChange({ sources: enabled ? filters.sources.filter((item) => item !== source) : [...filters.sources, source] });
+  };
   return (
     <section className="filter-panel" aria-label="Filtros de observaciones">
       <div className="filter-block radius-block">
@@ -46,9 +51,24 @@ export function FilterPanel({ filters, onChange, disabled }: Props) {
         </div>
       </div>
 
-      <div className="filter-block taxon-block">
+      <div className="filter-block source-block">
         <div className="filter-heading compact">
           <span className="filter-index">02</span>
+          <div><h2>Fuentes visibles</h2><p>Combina o aísla la evidencia</p></div>
+        </div>
+        <div className="source-options" aria-label="Fuentes de datos">
+          <button type="button" className={filters.sources.includes('inaturalist') ? 'active inaturalist' : ''} aria-pressed={filters.sources.includes('inaturalist')} onClick={() => toggleSource('inaturalist')} disabled={disabled}>
+            <span aria-hidden="true" /> <b>iNaturalist</b><small>comunidad</small>
+          </button>
+          <button type="button" className={filters.sources.includes('gbif') ? 'active gbif' : ''} aria-pressed={filters.sources.includes('gbif')} onClick={() => toggleSource('gbif')} disabled={disabled}>
+            <span aria-hidden="true" /> <b>GBIF</b><small>colecciones y sensores</small>
+          </button>
+        </div>
+      </div>
+
+      <div className="filter-block taxon-block">
+        <div className="filter-heading compact">
+          <span className="filter-index">03</span>
           <div><h2>Grupo de vida</h2><p>Filtra los registros</p></div>
         </div>
         <div className="taxon-options">
@@ -70,7 +90,7 @@ export function FilterPanel({ filters, onChange, disabled }: Props) {
 
       <div className="filter-block detail-block">
         <div className="filter-heading compact">
-          <span className="filter-index">03</span>
+          <span className="filter-index">04</span>
           <div><h2>Tiempo y calidad</h2><p>Fecha de observación</p></div>
         </div>
         <div className="filter-fields">
@@ -112,6 +132,7 @@ export function FilterPanel({ filters, onChange, disabled }: Props) {
           <button type="button" onClick={() => onChange({ from: dateBefore(1), to: undefined })}>Último año</button>
           <button type="button" onClick={() => onChange({ from: dateBefore(5), to: undefined })}>Últimos cinco años</button>
         </div>
+        {filters.sources.includes('gbif') && <p className="source-filter-note">La calidad es propia de iNaturalist; GBIF conserva el control de calidad y tipo de evidencia publicado por cada institución.</p>}
       </div>
     </section>
   );

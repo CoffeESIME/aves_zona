@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { apiError, cachedJson, rejectUnknownParams } from '@/src/lib/api-response';
-import { getObservations } from '@/src/lib/inaturalist/service';
+import { getObservations } from '@/src/lib/providers/service';
 import { parseApiFilters } from '@/src/lib/validation/filters';
 
 export const runtime = 'nodejs';

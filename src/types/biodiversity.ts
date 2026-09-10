@@ -14,11 +14,13 @@ export type TaxonFilter =
 export type QualityFilter = 'research' | 'needs_id' | 'verifiable';
 export type ViewMode = 'points' | 'hexagons';
 export type TaxonGroup = Exclude<TaxonFilter, 'all'>;
+export type DataSource = 'inaturalist' | 'gbif';
 
 export type AppliedFilters = {
   radius: RadiusKm;
   taxon: TaxonFilter;
   quality: QualityFilter;
+  sources: DataSource[];
   from?: string;
   to?: string;
 };
@@ -29,7 +31,14 @@ export type ResponseMeta = {
   center: { lat: number; lng: number; label: string };
   radiusKm: number;
   filters: AppliedFilters;
-  source: 'iNaturalist';
+  source: 'iNaturalist' | 'GBIF' | 'iNaturalist + GBIF';
+  providers?: Array<{
+    id: DataSource;
+    label: string;
+    totalAvailable: number;
+    returned: number;
+    truncated: boolean;
+  }>;
   generatedAt: string;
   totalAvailable: number;
   returned: number;
@@ -37,7 +46,11 @@ export type ResponseMeta = {
 };
 
 export type ObservationProperties = {
-  id: number;
+  id: number | string;
+  source: DataSource;
+  sourceLabel: 'iNaturalist' | 'GBIF';
+  datasetName: string | null;
+  recordType: string | null;
   observedOn: string | null;
   qualityGrade: string;
   iconicGroup: TaxonGroup;
@@ -57,7 +70,9 @@ export type ObservationsResponse = {
 };
 
 export type SpeciesItem = {
-  taxonId: number;
+  taxonId: number | string;
+  source: DataSource;
+  sourceLabel: 'iNaturalist' | 'GBIF' | 'iNaturalist + GBIF';
   commonName: string | null;
   scientificName: string;
   iconicGroup: TaxonGroup;
@@ -89,6 +104,34 @@ export type SummaryResponse = {
     cumulativeSpecies: number;
     addedSpecies: number | null;
   }>;
+  caveats: string[];
+};
+
+export type LossCategory = 'EXTINCT' | 'EXTINCT_IN_THE_WILD' | 'REGIONALLY_EXTINCT';
+
+export type LossSpecies = {
+  key: string;
+  scientificName: string;
+  commonName: string | null;
+  category: LossCategory;
+  lastRecorded: string | null;
+  datasetName: string | null;
+  occurrenceCount: number;
+  photoUrl: string | null;
+  photoAttribution: string | null;
+  photoLicense: string | null;
+  evidenceUrl: string;
+};
+
+export type LossesResponse = {
+  meta: {
+    center: ResponseMeta['center'];
+    radiusKm: number;
+    source: 'GBIF';
+    generatedAt: string;
+    totalOccurrences: number;
+  };
+  species: LossSpecies[];
   caveats: string[];
 };
 

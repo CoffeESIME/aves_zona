@@ -4,7 +4,7 @@ import { parseApiFilters, parseExplorerFilters, serializeFilters } from './filte
 describe('filtros compartibles', () => {
   it('acepta radios y filtros permitidos', () => {
     const result = parseApiFilters(new URLSearchParams('radius=5&taxon=birds&quality=research&from=2025-01-01'));
-    expect(result).toEqual({ radius: 5, taxon: 'birds', quality: 'research', from: '2025-01-01', to: undefined });
+    expect(result).toEqual({ radius: 5, taxon: 'birds', quality: 'research', sources: ['inaturalist', 'gbif'], from: '2025-01-01', to: undefined });
   });
 
   it('rechaza radios arbitrarios', () => {
@@ -15,7 +15,13 @@ describe('filtros compartibles', () => {
     expect(parseExplorerFilters(new URLSearchParams('radius=hack&taxon=oops&view=oops'))).toMatchObject({ radius: 2, taxon: 'all', quality: 'research', view: 'points' });
   });
 
+  it('acepta una o varias fuentes y evita una selección vacía', () => {
+    expect(parseApiFilters(new URLSearchParams('sources=gbif')).sources).toEqual(['gbif']);
+    expect(parseApiFilters(new URLSearchParams('sources=inaturalist,gbif')).sources).toEqual(['inaturalist', 'gbif']);
+    expect(() => parseApiFilters(new URLSearchParams('sources='))).toThrow();
+  });
+
   it('serializa todos los filtros sin coordenadas', () => {
-    expect(serializeFilters({ radius: 10, taxon: 'fungi', quality: 'verifiable', from: '2020-01-01', view: 'hexagons' })).toBe('radius=10&taxon=fungi&quality=verifiable&from=2020-01-01&view=hexagons');
+    expect(serializeFilters({ radius: 10, taxon: 'fungi', quality: 'verifiable', sources: ['gbif'], from: '2020-01-01', view: 'hexagons' })).toBe('radius=10&taxon=fungi&quality=verifiable&sources=gbif&from=2020-01-01&view=hexagons');
   });
 });

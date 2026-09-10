@@ -41,6 +41,8 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
   const loadedRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
   const hexagons = useMemo(() => (data ? aggregateHexagons(data) : emptyGeoJson), [data]);
+  const inaturalist = useMemo(() => ({ type: 'FeatureCollection' as const, features: data?.geojson.features.filter((feature) => feature.properties.source === 'inaturalist') ?? [] }), [data]);
+  const gbif = useMemo(() => ({ type: 'FeatureCollection' as const, features: data?.geojson.features.filter((feature) => feature.properties.source === 'gbif') ?? [] }), [data]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -87,29 +89,24 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
         id: 'search-radius-line', type: 'line', source: 'search-radius',
         paint: { 'line-color': '#244a38', 'line-width': 1.5, 'line-dasharray': [3, 2] },
       });
-      map.addSource('observations', {
-        type: 'geojson', data: emptyGeoJson, cluster: true, clusterMaxZoom: 14, clusterRadius: 48,
-      });
-      map.addLayer({
-        id: 'clusters', type: 'circle', source: 'observations', filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': '#173d2d',
-          'circle-radius': ['step', ['get', 'point_count'], 18, 40, 23, 150, 29],
-          'circle-stroke-width': 3, 'circle-stroke-color': '#f3f0e5',
-        },
-      });
-      map.addLayer({
-        id: 'cluster-count', type: 'symbol', source: 'observations', filter: ['has', 'point_count'],
-        layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 },
-        paint: { 'text-color': '#f6f3e9' },
-      });
-      map.addLayer({
-        id: 'observation-points', type: 'circle', source: 'observations', filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': pointColor, 'circle-radius': 6, 'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#f8f4e8',
-        },
-      });
+      for (const provider of [
+        { id: 'inaturalist', color: '#173d2d', stroke: '#f8f4e8', width: 1.5 },
+        { id: 'gbif', color: '#a24e2f', stroke: '#a24e2f', width: 2.8 },
+      ]) {
+        map.addSource(`observations-${provider.id}`, { type: 'geojson', data: emptyGeoJson, cluster: true, clusterMaxZoom: 14, clusterRadius: 48 });
+        map.addLayer({
+          id: `clusters-${provider.id}`, type: 'circle', source: `observations-${provider.id}`, filter: ['has', 'point_count'],
+          paint: { 'circle-color': provider.color, 'circle-radius': ['step', ['get', 'point_count'], 18, 40, 23, 150, 29], 'circle-stroke-width': 3, 'circle-stroke-color': '#f3f0e5' },
+        });
+        map.addLayer({
+          id: `cluster-count-${provider.id}`, type: 'symbol', source: `observations-${provider.id}`, filter: ['has', 'point_count'],
+          layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 }, paint: { 'text-color': '#f6f3e9' },
+        });
+        map.addLayer({
+          id: `observation-points-${provider.id}`, type: 'circle', source: `observations-${provider.id}`, filter: ['!', ['has', 'point_count']],
+          paint: { 'circle-color': pointColor, 'circle-radius': provider.id === 'gbif' ? 7 : 6, 'circle-stroke-width': provider.width, 'circle-stroke-color': provider.stroke },
+        });
+      }
       map.addSource('hexagons', { type: 'geojson', data: emptyGeoJson });
       map.addLayer({
         id: 'hexagon-fill', type: 'fill', source: 'hexagons',
@@ -123,23 +120,25 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
         paint: { 'line-color': '#f6f1e4', 'line-width': 1, 'line-opacity': 0.75 },
       });
 
-      map.on('click', 'clusters', async (event) => {
-        const feature = map.queryRenderedFeatures(event.point, { layers: ['clusters'] })[0];
-        const clusterId = feature?.properties?.cluster_id as number | undefined;
-        if (clusterId == null || feature?.geometry.type !== 'Point') return;
-        const source = map.getSource('observations') as GeoJSONSource;
-        const zoom = await source.getClusterExpansionZoom(clusterId);
-        map.easeTo({ center: feature.geometry.coordinates as [number, number], zoom });
-      });
-      map.on('click', 'observation-points', (event) => {
-        const props = event.features?.[0]?.properties as ObservationProperties | undefined;
-        if (props) onObservationSelect(props);
-      });
+      for (const provider of ['inaturalist', 'gbif']) {
+        map.on('click', `clusters-${provider}`, async (event) => {
+          const feature = map.queryRenderedFeatures(event.point, { layers: [`clusters-${provider}`] })[0];
+          const clusterId = feature?.properties?.cluster_id as number | undefined;
+          if (clusterId == null || feature?.geometry.type !== 'Point') return;
+          const source = map.getSource(`observations-${provider}`) as GeoJSONSource;
+          const zoom = await source.getClusterExpansionZoom(clusterId);
+          map.easeTo({ center: feature.geometry.coordinates as [number, number], zoom });
+        });
+        map.on('click', `observation-points-${provider}`, (event) => {
+          const props = event.features?.[0]?.properties as ObservationProperties | undefined;
+          if (props) onObservationSelect(props);
+        });
+      }
       map.on('click', 'hexagon-fill', (event) => {
         const props = event.features?.[0]?.properties as HexProperties | undefined;
         if (props) onHexSelect(props);
       });
-      for (const layer of ['clusters', 'observation-points', 'hexagon-fill']) {
+      for (const layer of ['clusters-inaturalist', 'observation-points-inaturalist', 'clusters-gbif', 'observation-points-gbif', 'hexagon-fill']) {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
       }
@@ -173,16 +172,17 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
-    (map.getSource('observations') as GeoJSONSource).setData(data?.geojson ?? emptyGeoJson);
+    (map.getSource('observations-inaturalist') as GeoJSONSource).setData(inaturalist);
+    (map.getSource('observations-gbif') as GeoJSONSource).setData(gbif);
     (map.getSource('hexagons') as GeoJSONSource).setData(hexagons);
-  }, [data, hexagons, mapReady]);
+  }, [gbif, hexagons, inaturalist, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
     const pointsVisibility = filters.view === 'points' ? 'visible' : 'none';
     const hexVisibility = filters.view === 'hexagons' ? 'visible' : 'none';
-    for (const layer of ['clusters', 'cluster-count', 'observation-points']) map.setLayoutProperty(layer, 'visibility', pointsVisibility);
+    for (const layer of ['clusters-inaturalist', 'cluster-count-inaturalist', 'observation-points-inaturalist', 'clusters-gbif', 'cluster-count-gbif', 'observation-points-gbif']) map.setLayoutProperty(layer, 'visibility', pointsVisibility);
     for (const layer of ['hexagon-fill', 'hexagon-line']) map.setLayoutProperty(layer, 'visibility', hexVisibility);
   }, [filters.view, mapReady]);
 

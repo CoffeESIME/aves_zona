@@ -21,6 +21,7 @@ function queryFor(filters: ExplorerFilters) {
     radius: String(filters.radius),
     taxon: filters.taxon,
     quality: filters.quality,
+    sources: filters.sources.join(','),
   });
   if (filters.from) params.set('from', filters.from);
   if (filters.to) params.set('to', filters.to);

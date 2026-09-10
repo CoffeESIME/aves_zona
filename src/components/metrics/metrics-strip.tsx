@@ -17,13 +17,14 @@ function dateLabel(value: string | null | undefined) {
 
 export function MetricsStrip({ summary, observations, loading }: Props) {
   const selected = summary?.selected;
+  const combined = observations?.meta.source === 'iNaturalist + GBIF';
   const researchPercent =
     selected?.researchGradeCount != null && selected.observationCount > 0
       ? Math.round((selected.researchGradeCount / selected.observationCount) * 100)
       : null;
   const metrics = [
-    ['Especies registradas', selected ? formatter.format(selected.speciesCount) : '—'],
-    ['Observaciones', selected ? formatter.format(selected.observationCount) : '—'],
+    [combined ? 'Especies · suma fuentes' : 'Especies registradas', selected ? formatter.format(selected.speciesCount) : '—'],
+    [combined ? 'Registros · suma fuentes' : 'Observaciones', selected ? formatter.format(selected.observationCount) : '—'],
     ['Grupos', selected ? formatter.format(selected.groupCount) : '—'],
     ['Observadores', selected?.observerCount != null ? formatter.format(selected.observerCount) : '—'],
     ['Periodo visible', selected ? `${dateLabel(selected.earliestObservation)} — ${dateLabel(selected.latestObservation)}` : '—'],

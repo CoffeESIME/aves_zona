@@ -102,26 +102,33 @@ export function Explorer() {
             />
           )}
           <div className="map-legend" aria-label="Leyenda">
-            <span className="legend-title">Riqueza registrada</span>
-            <span className="legend-scale" aria-hidden="true" />
-            <span>menor</span><span>mayor</span>
+            {filters.view === 'points' ? <>
+              <span className="legend-title">Fuente del registro</span>
+              <span className="legend-source"><i className="inat" /> iNaturalist</span>
+              <span className="legend-source"><i className="gbif" /> GBIF</span>
+            </> : <>
+              <span className="legend-title">Riqueza registrada</span>
+              <span className="legend-scale" aria-hidden="true" />
+              <span>menor</span><span>mayor</span>
+            </>}
             {filters.view === 'hexagons' && data.observations?.meta.truncated && <b>Basado en los registros mostrados</b>}
           </div>
           <ObservationSheet observation={selectedObservation} hex={selectedHex} truncated={data.observations?.meta.truncated ?? false} onClose={closeDetail} />
         </div>
-        <p className="science-warning"><LeafIcon /> El mapa muestra especies observadas y registradas en iNaturalist. La ausencia de registros no demuestra la ausencia de vida.</p>
+        <p className="science-warning"><LeafIcon /> El mapa integra observaciones comunitarias y evidencia institucional seleccionada. La ausencia de registros no demuestra la ausencia de vida.</p>
         <details className="observation-list">
           <summary>Consultar alternativa textual del mapa</summary>
           <div>
             {data.observations?.geojson.features.slice(0, 50).map((feature) => (
               <button
                 type="button"
-                key={feature.properties.id}
+                key={`${feature.properties.source}:${feature.properties.id}`}
                 onClick={() => onObservationSelect(feature.properties)}
               >
                 <span>{feature.properties.commonName ?? feature.properties.scientificName}</span>
                 <em>{feature.properties.scientificName}</em>
                 <small>{feature.properties.observedOn?.slice(0, 10) ?? 'Fecha no disponible'}</small>
+                <small className={`list-source ${feature.properties.source}`}>{feature.properties.sourceLabel}</small>
               </button>
             ))}
             {!data.loading && data.observations?.geojson.features.length === 0 && (
