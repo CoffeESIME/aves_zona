@@ -34,12 +34,12 @@ test.beforeEach(async ({ page }) => {
 
 test('recorrido principal conserva filtros y permite inspeccionar un registro', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('radio', { name: '2 km' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: '1 km', exact: true })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: /iNaturalist/ })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: /GBIF/ }).click();
+  await expect(page.getByRole('button', { name: /GBIF/ })).toHaveAttribute('aria-pressed', 'false');
   await expect(page).toHaveURL(/sources=inaturalist/);
   await page.getByRole('radio', { name: '5 km' }).click();
-  await page.getByRole('button', { name: 'Aves' }).click();
+  await page.getByRole('button', { name: 'Aves', exact: true }).click();
   await expect(page).toHaveURL(/radius=5.*taxon=birds/);
 
   await page.getByText('Consultar alternativa textual del mapa').click();
@@ -50,4 +50,44 @@ test('recorrido principal conserva filtros y permite inspeccionar un registro', 
   await expect(page).toHaveURL(/view=hexagons/);
   await page.reload();
   await expect(page.getByRole('button', { name: 'Mosaico' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('eBird se puede aislar y la ficha carga galería, audio y conservación', async ({ page }, testInfo) => {
+  await page.route('**/api/biodiversity/bird-details?**', route => route.fulfill({ json: {
+    taxonUrl: 'https://www.inaturalist.org/taxa/123',
+    photos: [{ url: '/fallback-species.svg', attribution: 'Fotógrafa de prueba', license: 'cc-by', evidenceUrl: 'https://www.inaturalist.org/photos/1' }],
+    sounds: [{ url: '/test-recording.mp3', attribution: 'Grabadora de prueba', license: 'cc-by-sa', evidenceUrl: 'https://www.inaturalist.org/observations/1' }],
+    conservation: [{ status: 'EN', label: 'En peligro', authority: 'IUCN Red List', scope: 'Global', url: 'https://www.iucnredlist.org' }], notices: [],
+  } }));
+  await page.goto('/');
+  await page.getByRole('button', { name: /eBird/ }).click();
+  await page.getByRole('button', { name: /iNaturalist/ }).click();
+  await page.getByRole('button', { name: 'Aves', exact: true }).click();
+  await expect(page).toHaveURL(/sources=ebird/);
+  await page.reload();
+  await expect(page.getByRole('button', { name: /eBird/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByText('Galería, sonidos y conservación', { exact: true }).click();
+  await expect(page.getByText('En peligro (EN)')).toBeVisible();
+  await expect(page.getByText('IUCN Red List · Global')).toBeVisible();
+  await expect(page.getByText('Fotógrafa de prueba · cc-by')).toBeVisible();
+  await expect(page.locator('audio')).toHaveAttribute('preload', 'none');
+  await expect(page.locator('audio')).toHaveAttribute('controls', '');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('bird-details.png'), fullPage: true });
+});
+
+test('muestra periodos de las fuentes activas y explica Otros', async ({ page }) => {
+  await page.goto('/');
+  const periods = page.getByRole('region', { name: 'Periodo visible por fuente' });
+  await expect(periods.getByRole('heading', { name: 'iNaturalist', exact: true })).toBeVisible();
+  await expect(periods.getByText(/2025/)).toBeVisible();
+  await expect(periods.getByRole('heading', { name: 'GBIF', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: /GBIF/ }).click();
+  await expect(periods.getByRole('heading', { name: 'GBIF', exact: true })).toBeVisible();
+  await expect(periods.getByText('Sin registros con estos filtros')).toBeVisible();
+  await page.getByRole('button', { name: 'Otros', exact: true }).click();
+  await expect(page.getByRole('note')).toContainText('peces, arácnidos, moluscos');
+  await page.getByRole('button', { name: 'Aves', exact: true }).click();
+  await expect(page.getByRole('note')).toHaveCount(0);
+  await expect(page.locator('#perdida')).toHaveCount(0);
 });

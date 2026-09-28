@@ -1,4 +1,5 @@
 import type { ObservationsResponse, SummaryResponse } from '@/src/types/biodiversity';
+import { formatPeriod, visiblePeriod } from '@/src/lib/visible-periods';
 
 type Props = {
   summary: SummaryResponse | null;
@@ -8,16 +9,10 @@ type Props = {
 
 const formatter = new Intl.NumberFormat('es-MX');
 
-function dateLabel(value: string | null | undefined) {
-  if (!value) return 'No disponible';
-  return new Intl.DateTimeFormat('es-MX', { year: 'numeric', month: 'short' }).format(
-    new Date(`${value.slice(0, 10)}T12:00:00`),
-  );
-}
-
 export function MetricsStrip({ summary, observations, loading }: Props) {
   const selected = summary?.selected;
-  const combined = observations?.meta.source === 'iNaturalist + GBIF';
+  const period = visiblePeriod(observations);
+  const combined = (observations?.meta.source.includes(' + ') ?? false);
   const researchPercent =
     selected?.researchGradeCount != null && selected.observationCount > 0
       ? Math.round((selected.researchGradeCount / selected.observationCount) * 100)
@@ -27,7 +22,7 @@ export function MetricsStrip({ summary, observations, loading }: Props) {
     [combined ? 'Registros · suma fuentes' : 'Observaciones', selected ? formatter.format(selected.observationCount) : '—'],
     ['Grupos', selected ? formatter.format(selected.groupCount) : '—'],
     ['Observadores', selected?.observerCount != null ? formatter.format(selected.observerCount) : '—'],
-    ['Periodo visible', selected ? `${dateLabel(selected.earliestObservation)} — ${dateLabel(selected.latestObservation)}` : '—'],
+    ['Periodo visible', loading ? 'Consultando…' : observations ? formatPeriod(period.from, period.to) : '—'],
     ['Grado investigación', researchPercent == null ? '—' : `${researchPercent}%`],
   ];
 

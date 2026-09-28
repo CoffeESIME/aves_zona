@@ -305,3 +305,36 @@ footer > div { display: flex; align-items: center; gap: .7rem; letter-spacing: .
   .site-header nav, .source-link, .filter-panel, .view-switch, .map-frame, .sort-switch, footer a { display: none !important; }
   .hero { min-height: 0; }.content-shell { padding: 1rem; }.species-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* eBird and on-demand field notes share the explorer's paper palette. */
+.source-periods { margin: 1.5rem 0; padding-block: 1.2rem; border-block: 1px solid var(--line); }
+.source-periods h3 { margin: 0; font-family: var(--serif); font-size: 1.35rem; font-weight: 500; }
+.source-periods > p { margin: .4rem 0 1rem; font-size: .78rem; color: var(--ink-soft); }
+.source-period-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1.2rem; }
+.source-period h4 { margin: 0 0 .4rem; font-size: .8rem; color: var(--forest-deep); }
+.source-period.gbif h4 { color: var(--rust); }
+.source-period.ebird h4 { color: #315d84; }
+.source-period p { margin: 0; font-size: .85rem; }
+.source-period small { display: block; margin-top: .4rem; font-size: .72rem; color: var(--ink-soft); line-height: 1.5; }
+.other-taxa-note { margin-block: 1rem; padding: 1rem; background: var(--paper-deep); font-size: .85rem; line-height: 1.6; }
+.other-taxa-note strong { margin-right: .4rem; }
+.source-options button.active.ebird, .source-badge.ebird, .species-source.ebird, .list-source.ebird { background: #315d84; color: var(--paper); }
+.source-options button.active.ebird small { color: var(--paper); }
+.source-options button.active.ebird > span, .legend-source i.ebird { background: #315d84; border-color: var(--paper); box-shadow: 0 0 0 1px #315d84; }
+.provider-notes { margin: 1.5rem 0; font-size: .8rem; color: var(--ink-soft); }
+.provider-notes summary, .bird-details summary { cursor: pointer; font-weight: 700; }
+.bird-details { clear: both; margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--line); font-size: .8rem; }
+.bird-details-content > p { font-size: .75rem; font-weight: 400; line-height: 1.5; margin: .8rem 0; }
+.bird-details-content { max-height: 40rem; overflow-y: auto; scrollbar-gutter: stable; padding-right: .3rem; }
+.bird-details-content:focus-visible { outline: 2px solid #315d84; outline-offset: 2px; }
+.bird-details h4 { font-size: .85rem; margin: 1.3rem 0 .6rem; }
+.bird-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+.bird-gallery figure, .bird-audio { margin: 0; min-width: 0; }
+.bird-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.bird-details figcaption { font-size: .6rem; line-height: 1.4; color: var(--ink-soft); overflow-wrap: anywhere; }
+.bird-audio { margin-bottom: 1rem; }
+.bird-audio audio { width: 100%; height: 36px; }
+.conservation-list { padding: 0; list-style: none; }
+.conservation-list li { display: grid; gap: .25rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.bird-details button { padding: .5rem; border: 1px solid var(--line); color: var(--forest-deep); background: var(--paper); cursor: pointer; }
+.bird-details summary:focus-visible, .bird-details a:focus-visible, .bird-details button:focus-visible { outline: 2px solid #315d84; outline-offset: 3px; }

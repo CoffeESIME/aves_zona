@@ -2,16 +2,22 @@ import { ZodError } from 'zod';
 import { NextResponse } from 'next/server';
 import { INaturalistError } from '@/src/lib/inaturalist/errors';
 import { GBIFError } from '@/src/lib/gbif/errors';
+import { EBirdError } from '@/src/lib/ebird/service';
 
 export const CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800';
 
 export function cachedJson<T>(body: T, init?: ResponseInit) {
   const response = NextResponse.json(body, init);
-  response.headers.set('Cache-Control', CACHE_CONTROL);
+  const partial = body && typeof body === 'object' && (
+    ('meta' in body && (body.meta as { warnings?: string[] })?.warnings?.length) ||
+    ('caveats' in body && (body.caveats as string[]).some(note => note.includes('no está disponible')))
+  );
+  response.headers.set('Cache-Control', partial ? 'no-store' : CACHE_CONTROL);
   return response;
 }
 
 export function apiError(error: unknown) {
+  if (error instanceof EBirdError) return NextResponse.json({ error: error.message }, { status: 502 });
   if (error instanceof ZodError) {
     return NextResponse.json(
       { error: 'Los filtros no son válidos.', details: error.issues.map((issue) => issue.message) },

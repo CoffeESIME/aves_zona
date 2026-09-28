@@ -19,6 +19,7 @@ async function waitUntilReady(child: ChildProcess) {
 export default async function globalSetup() {
   const child = spawn(process.execPath, [path.resolve('scripts/e2e-server.mjs')], {
     cwd: process.cwd(),
+    env: { ...process.env, NODE_ENV: 'production' },
     stdio: 'inherit',
     windowsHide: true,
   });

@@ -14,7 +14,7 @@ export type TaxonFilter =
 export type QualityFilter = 'research' | 'needs_id' | 'verifiable';
 export type ViewMode = 'points' | 'hexagons';
 export type TaxonGroup = Exclude<TaxonFilter, 'all'>;
-export type DataSource = 'inaturalist' | 'gbif';
+export type DataSource = 'inaturalist' | 'gbif' | 'ebird';
 
 export type AppliedFilters = {
   radius: RadiusKm;
@@ -28,10 +28,11 @@ export type AppliedFilters = {
 export type ExplorerFilters = AppliedFilters & { view: ViewMode };
 
 export type ResponseMeta = {
+  warnings?: string[];
   center: { lat: number; lng: number; label: string };
   radiusKm: number;
   filters: AppliedFilters;
-  source: 'iNaturalist' | 'GBIF' | 'iNaturalist + GBIF';
+  source: string;
   providers?: Array<{
     id: DataSource;
     label: string;
@@ -48,7 +49,7 @@ export type ResponseMeta = {
 export type ObservationProperties = {
   id: number | string;
   source: DataSource;
-  sourceLabel: 'iNaturalist' | 'GBIF';
+  sourceLabel: string;
   datasetName: string | null;
   recordType: string | null;
   observedOn: string | null;
@@ -72,7 +73,7 @@ export type ObservationsResponse = {
 export type SpeciesItem = {
   taxonId: number | string;
   source: DataSource;
-  sourceLabel: 'iNaturalist' | 'GBIF' | 'iNaturalist + GBIF';
+  sourceLabel: string;
   commonName: string | null;
   scientificName: string;
   iconicGroup: TaxonGroup;

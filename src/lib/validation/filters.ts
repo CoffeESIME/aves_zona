@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { AppliedFilters, ExplorerFilters } from '@/src/types/biodiversity';
 
-const sourceSchema = z.enum(['inaturalist', 'gbif']);
+const sourceSchema = z.enum(['inaturalist', 'gbif', 'ebird']);
 const sourcesSchema = z.preprocess(
   (value) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value),
   z.array(sourceSchema).min(1).transform((items) => [...new Set(items)]),
@@ -31,10 +31,10 @@ export const apiFiltersSchema = z
   });
 
 const DEFAULTS: ExplorerFilters = {
-  radius: 2,
+  radius: 1,
   taxon: 'all',
   quality: 'research',
-  sources: ['inaturalist', 'gbif'],
+  sources: ['inaturalist'],
   view: 'points',
 };
 

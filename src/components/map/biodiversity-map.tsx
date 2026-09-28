@@ -43,6 +43,7 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
   const hexagons = useMemo(() => (data ? aggregateHexagons(data) : emptyGeoJson), [data]);
   const inaturalist = useMemo(() => ({ type: 'FeatureCollection' as const, features: data?.geojson.features.filter((feature) => feature.properties.source === 'inaturalist') ?? [] }), [data]);
   const gbif = useMemo(() => ({ type: 'FeatureCollection' as const, features: data?.geojson.features.filter((feature) => feature.properties.source === 'gbif') ?? [] }), [data]);
+  const ebird = useMemo(() => ({ type: 'FeatureCollection' as const, features: data?.geojson.features.filter((feature) => feature.properties.source === 'ebird') ?? [] }), [data]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -91,6 +92,7 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
       });
       for (const provider of [
         { id: 'inaturalist', color: '#173d2d', stroke: '#f8f4e8', width: 1.5 },
+        { id: 'ebird', color: '#315d84', stroke: '#315d84', width: 3 },
         { id: 'gbif', color: '#a24e2f', stroke: '#a24e2f', width: 2.8 },
       ]) {
         map.addSource(`observations-${provider.id}`, { type: 'geojson', data: emptyGeoJson, cluster: true, clusterMaxZoom: 14, clusterRadius: 48 });
@@ -120,7 +122,7 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
         paint: { 'line-color': '#f6f1e4', 'line-width': 1, 'line-opacity': 0.75 },
       });
 
-      for (const provider of ['inaturalist', 'gbif']) {
+      for (const provider of ['inaturalist', 'gbif', 'ebird']) {
         map.on('click', `clusters-${provider}`, async (event) => {
           const feature = map.queryRenderedFeatures(event.point, { layers: [`clusters-${provider}`] })[0];
           const clusterId = feature?.properties?.cluster_id as number | undefined;
@@ -138,7 +140,7 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
         const props = event.features?.[0]?.properties as HexProperties | undefined;
         if (props) onHexSelect(props);
       });
-      for (const layer of ['clusters-inaturalist', 'observation-points-inaturalist', 'clusters-gbif', 'observation-points-gbif', 'hexagon-fill']) {
+      for (const layer of ['clusters-inaturalist', 'observation-points-inaturalist', 'clusters-gbif', 'observation-points-gbif', 'clusters-ebird', 'observation-points-ebird', 'hexagon-fill']) {
         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
       }
@@ -174,15 +176,16 @@ export default function BiodiversityMap({ data, filters, onObservationSelect, on
     if (!map || !mapReady) return;
     (map.getSource('observations-inaturalist') as GeoJSONSource).setData(inaturalist);
     (map.getSource('observations-gbif') as GeoJSONSource).setData(gbif);
+    (map.getSource('observations-ebird') as GeoJSONSource).setData(ebird);
     (map.getSource('hexagons') as GeoJSONSource).setData(hexagons);
-  }, [gbif, hexagons, inaturalist, mapReady]);
+  }, [ebird, gbif, hexagons, inaturalist, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
     const pointsVisibility = filters.view === 'points' ? 'visible' : 'none';
     const hexVisibility = filters.view === 'hexagons' ? 'visible' : 'none';
-    for (const layer of ['clusters-inaturalist', 'cluster-count-inaturalist', 'observation-points-inaturalist', 'clusters-gbif', 'cluster-count-gbif', 'observation-points-gbif']) map.setLayoutProperty(layer, 'visibility', pointsVisibility);
+    for (const layer of ['clusters-inaturalist', 'cluster-count-inaturalist', 'observation-points-inaturalist', 'clusters-gbif', 'cluster-count-gbif', 'observation-points-gbif', 'clusters-ebird', 'cluster-count-ebird', 'observation-points-ebird']) map.setLayoutProperty(layer, 'visibility', pointsVisibility);
     for (const layer of ['hexagon-fill', 'hexagon-line']) map.setLayoutProperty(layer, 'visibility', hexVisibility);
   }, [filters.view, mapReady]);
 

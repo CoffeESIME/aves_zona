@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FilterPanel } from '@/src/components/filters/filter-panel';
 import { LeafIcon, MapPinIcon } from '@/src/components/icons';
 import { MetricsStrip } from '@/src/components/metrics/metrics-strip';
+import { SourcePeriods } from '@/src/components/metrics/source-periods';
+import { OTHER_TAXA_DESCRIPTION } from '@/src/lib/taxonomy';
 import { ObservationSheet } from '@/src/components/map/observation-sheet';
 import { SpeciesGrid } from '@/src/components/species/species-grid';
 import { useBiodiversity } from '@/src/hooks/use-biodiversity';
@@ -67,6 +69,7 @@ export function Explorer() {
   return (
     <>
       <FilterPanel filters={filters} onChange={changeFilters} />
+      {[...new Set([...(data.observations?.meta.warnings ?? []), ...(data.species?.meta.warnings ?? [])])].map(note => <p className="data-error" role="status" key={note}>{note}</p>)}
 
       {data.error && (
         <div className="data-error" role="alert">
@@ -106,6 +109,7 @@ export function Explorer() {
               <span className="legend-title">Fuente del registro</span>
               <span className="legend-source"><i className="inat" /> iNaturalist</span>
               <span className="legend-source"><i className="gbif" /> GBIF</span>
+              <span className="legend-source"><i className="ebird" /> eBird</span>
             </> : <>
               <span className="legend-title">Riqueza registrada</span>
               <span className="legend-scale" aria-hidden="true" />
@@ -116,6 +120,8 @@ export function Explorer() {
           <ObservationSheet observation={selectedObservation} hex={selectedHex} truncated={data.observations?.meta.truncated ?? false} onClose={closeDetail} />
         </div>
         <p className="science-warning"><LeafIcon /> El mapa integra observaciones comunitarias y evidencia institucional seleccionada. La ausencia de registros no demuestra la ausencia de vida.</p>
+        {filters.taxon === 'other' && <p className="other-taxa-note" id="other-taxa-note" role="note"><strong>Otros*</strong> {OTHER_TAXA_DESCRIPTION}</p>}
+        <SourcePeriods sources={filters.sources} observations={data.observations} loading={data.loading} error={Boolean(data.error)} />
         <details className="observation-list">
           <summary>Consultar alternativa textual del mapa</summary>
           <div>
@@ -157,6 +163,7 @@ export function Explorer() {
         </section>
       )}
 
+      <details className="provider-notes"><summary>Alcance de las fuentes seleccionadas</summary>{data.summary?.caveats.map(note => <p key={note}>{note}</p>)}</details>
       <SpeciesGrid data={data.species} loading={data.loading} sort={speciesSort} onSort={setSpeciesSort} />
     </>
   );

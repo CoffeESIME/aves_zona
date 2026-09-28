@@ -1,5 +1,7 @@
 import type { TaxonFilter, TaxonGroup } from '@/src/types/biodiversity';
 
+export const OTHER_TAXA_DESCRIPTION = '«Otros» agrupa peces, arácnidos, moluscos y otros organismos que no pertenecen a los grupos anteriores, además de registros sin grupo identificado. No significa que sean especies raras o amenazadas. eBird solo aporta aves y no devuelve registros en este grupo.';
+
 export const TAXON_CONFIG: Record<
   TaxonFilter,
   { label: string; color: string; iconicTaxa: string[] | null }

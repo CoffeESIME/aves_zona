@@ -1,7 +1,7 @@
 'use client';
 
 import { RADII, type DataSource, type ExplorerFilters, type RadiusKm, type TaxonFilter } from '@/src/types/biodiversity';
-import { TAXON_CONFIG } from '@/src/lib/taxonomy';
+import { OTHER_TAXA_DESCRIPTION, TAXON_CONFIG } from '@/src/lib/taxonomy';
 
 type Props = {
   filters: ExplorerFilters;
@@ -63,7 +63,11 @@ export function FilterPanel({ filters, onChange, disabled }: Props) {
           <button type="button" className={filters.sources.includes('gbif') ? 'active gbif' : ''} aria-pressed={filters.sources.includes('gbif')} onClick={() => toggleSource('gbif')} disabled={disabled}>
             <span aria-hidden="true" /> <b>GBIF</b><small>colecciones y sensores</small>
           </button>
+          <button type="button" className={filters.sources.includes('ebird') ? 'active ebird' : ''} aria-pressed={filters.sources.includes('ebird')} onClick={() => toggleSource('ebird')} disabled={disabled}>
+            <span aria-hidden="true" /> <b>eBird</b><small>aves · últimos 30 días</small>
+          </button>
         </div>
+        {filters.sources.includes('ebird') && <p className="source-filter-note">eBird muestra solo aves recientes (30 días), con validación propia. No aporta registros para otros grupos ni para fechas anteriores.</p>}
       </div>
 
       <div className="filter-block taxon-block">
@@ -78,11 +82,14 @@ export function FilterPanel({ filters, onChange, disabled }: Props) {
               key={taxon}
               className={filters.taxon === taxon ? 'active' : ''}
               aria-pressed={filters.taxon === taxon}
+              title={taxon === 'other' ? OTHER_TAXA_DESCRIPTION : undefined}
+              aria-describedby={taxon === 'other' && filters.taxon === 'other' ? 'other-taxa-note' : undefined}
               onClick={() => onChange({ taxon })}
               disabled={disabled}
             >
               <span className="taxon-dot" style={{ background: TAXON_CONFIG[taxon].color }} />
               {TAXON_CONFIG[taxon].label}
+              {taxon === 'other' && <sup aria-hidden="true">*</sup>}
             </button>
           ))}
         </div>

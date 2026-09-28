@@ -1,25 +1,44 @@
+import { getEBirdObservations, getEBirdSpecies, getEBirdSummary } from '@/src/lib/ebird/service';
 import { getGBIFObservations, getGBIFSpecies, getGBIFSummary } from '@/src/lib/gbif/service';
 import { getObservations as getINaturalistObservations, getSpecies as getINaturalistSpecies, getSummary as getINaturalistSummary } from '@/src/lib/inaturalist/service';
 import type { AppliedFilters, ObservationsResponse, SpeciesItem, SpeciesResponse, SummaryResponse } from '@/src/types/biodiversity';
 
-function active(filters: AppliedFilters, id: 'inaturalist' | 'gbif') {
+function active(filters: AppliedFilters, id: 'inaturalist' | 'gbif' | 'ebird') {
   return filters.sources.includes(id);
 }
 
+async function collect<T>(requests: Array<Promise<T> | null>) {
+  const results = await Promise.allSettled(requests);
+  const responses: T[] = [];
+  const warnings: string[] = [];
+  const labels = ['iNaturalist', 'GBIF', 'eBird'];
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value != null) responses.push(result.value);
+    if (result.status === 'rejected') warnings.push(`${labels[index]} no está disponible. Los resultados incluyen solo las fuentes que respondieron.`);
+  });
+  if (!responses.length) {
+    const failure = results.find(result => result.status === 'rejected');
+    throw failure?.status === 'rejected' ? failure.reason : new Error('No hay fuentes seleccionadas.');
+  }
+  return { responses, warnings };
+}
+
 export async function getObservations(filters: AppliedFilters): Promise<ObservationsResponse> {
-  const responses = await Promise.all([
+  const { responses, warnings } = await collect([
     active(filters, 'inaturalist') ? getINaturalistObservations(filters) : null,
     active(filters, 'gbif') ? getGBIFObservations(filters) : null,
+    active(filters, 'ebird') ? getEBirdObservations(filters) : null,
   ]);
   const selected = responses.filter((item): item is ObservationsResponse => item != null);
-  if (selected.length === 1) return selected[0]!;
+  if (selected.length === 1) return { ...selected[0]!, meta: { ...selected[0]!.meta, warnings } };
   const providers = selected.flatMap((item) => item.meta.providers ?? []);
   return {
     meta: {
+      warnings,
       center: selected[0]!.meta.center,
       radiusKm: filters.radius,
       filters,
-      source: 'iNaturalist + GBIF',
+      source: selected.map(item => item.meta.source).join(' + '),
       providers,
       generatedAt: new Date().toISOString(),
       totalAvailable: providers.reduce((sum, item) => sum + item.totalAvailable, 0),
@@ -31,19 +50,20 @@ export async function getObservations(filters: AppliedFilters): Promise<Observat
 }
 
 export async function getSpecies(filters: AppliedFilters, order: 'asc' | 'desc'): Promise<SpeciesResponse> {
-  const responses = await Promise.all([
+  const { responses, warnings } = await collect([
     active(filters, 'inaturalist') ? getINaturalistSpecies(filters, order) : null,
     active(filters, 'gbif') ? getGBIFSpecies(filters, order) : null,
+    active(filters, 'ebird') ? getEBirdSpecies(filters, order) : null,
   ]);
   const selected = responses.filter((item): item is SpeciesResponse => item != null);
-  if (selected.length === 1) return selected[0]!;
+  if (selected.length === 1) return { ...selected[0]!, meta: { ...selected[0]!.meta, warnings } };
   const merged = new Map<string, SpeciesItem>();
   for (const item of selected.flatMap((response) => response.species)) {
     const key = item.scientificName.toLowerCase();
     const current = merged.get(key);
     if (current) {
       current.observationCount += item.observationCount;
-      current.sourceLabel = 'iNaturalist + GBIF';
+      current.sourceLabel = [...new Set([...current.sourceLabel.split(' + '), item.sourceLabel])].join(' + ');
       if (!current.photoUrl && item.photoUrl) {
         current.photoUrl = item.photoUrl;
         current.photoAttribution = item.photoAttribution;
@@ -55,8 +75,9 @@ export async function getSpecies(filters: AppliedFilters, order: 'asc' | 'desc')
   const providers = selected.flatMap((item) => item.meta.providers ?? []);
   return {
     meta: {
+      warnings,
       center: selected[0]!.meta.center, radiusKm: filters.radius, filters,
-      source: 'iNaturalist + GBIF', providers, generatedAt: new Date().toISOString(),
+      source: selected.map(item => item.meta.source).join(' + '), providers, generatedAt: new Date().toISOString(),
       totalAvailable: selected.reduce((sum, item) => sum + item.totalSpecies, 0),
       returned: species.length, truncated: selected.some((item) => item.meta.truncated),
     },
@@ -73,12 +94,13 @@ function latest(values: Array<string | null>) {
 }
 
 export async function getSummary(filters: AppliedFilters): Promise<SummaryResponse> {
-  const responses = await Promise.all([
+  const { responses, warnings } = await collect([
     active(filters, 'inaturalist') ? getINaturalistSummary(filters) : null,
     active(filters, 'gbif') ? getGBIFSummary(filters) : null,
+    active(filters, 'ebird') ? getEBirdSummary(filters) : null,
   ]);
   const selected = responses.filter((item): item is SummaryResponse => item != null);
-  if (selected.length === 1) return selected[0]!;
+  if (selected.length === 1) return { ...selected[0]!, caveats: [...warnings, ...selected[0]!.caveats] };
   return {
     selected: {
       speciesCount: selected.reduce((sum, item) => sum + item.selected.speciesCount, 0),
@@ -95,8 +117,9 @@ export async function getSummary(filters: AppliedFilters): Promise<SummaryRespon
       return { radiusKm: ring.radiusKm, cumulativeSpecies, addedSpecies: previous == null ? null : Math.max(0, cumulativeSpecies - previous) };
     }),
     caveats: [
+      ...warnings,
       ...selected.flatMap((item) => item.caveats),
-      'Al combinar fuentes, las especies se suman por proveedor: un mismo taxón puede estar representado en ambas y el total no es un inventario deduplicado.',
+      'Al combinar fuentes, las especies se suman por proveedor: un mismo taxón puede estar representado en varias y el total no es un inventario deduplicado.',
     ],
   };
 }

@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { parseApiFilters, parseExplorerFilters, serializeFilters } from './filters';
 
 describe('filtros compartibles', () => {
+  it('inicia a 1 km con iNaturalist y respeta enlaces explícitos', () => {
+    expect(parseApiFilters(new URLSearchParams())).toMatchObject({ radius: 1, sources: ['inaturalist'] });
+    expect(parseExplorerFilters(new URLSearchParams())).toMatchObject({ radius: 1, sources: ['inaturalist'] });
+    expect(parseExplorerFilters(new URLSearchParams('radius=2&sources=ebird'))).toMatchObject({ radius: 2, sources: ['ebird'] });
+  });
   it('acepta radios y filtros permitidos', () => {
     const result = parseApiFilters(new URLSearchParams('radius=5&taxon=birds&quality=research&from=2025-01-01'));
-    expect(result).toEqual({ radius: 5, taxon: 'birds', quality: 'research', sources: ['inaturalist', 'gbif'], from: '2025-01-01', to: undefined });
+    expect(result).toEqual({ radius: 5, taxon: 'birds', quality: 'research', sources: ['inaturalist'], from: '2025-01-01', to: undefined });
   });
 
   it('rechaza radios arbitrarios', () => {
@@ -12,7 +17,7 @@ describe('filtros compartibles', () => {
   });
 
   it('reemplaza valores inválidos por defaults seguros en la interfaz', () => {
-    expect(parseExplorerFilters(new URLSearchParams('radius=hack&taxon=oops&view=oops'))).toMatchObject({ radius: 2, taxon: 'all', quality: 'research', view: 'points' });
+    expect(parseExplorerFilters(new URLSearchParams('radius=hack&taxon=oops&view=oops'))).toMatchObject({ radius: 1, taxon: 'all', quality: 'research', sources: ['inaturalist'], view: 'points' });
   });
 
   it('acepta una o varias fuentes y evita una selección vacía', () => {

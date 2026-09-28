@@ -2,6 +2,7 @@ import { CloseIcon, ArrowIcon } from '@/src/components/icons';
 import { TAXON_CONFIG } from '@/src/lib/taxonomy';
 import type { HexProperties, ObservationProperties } from '@/src/types/biodiversity';
 import { LicensedPhoto } from '@/src/components/licensed-photo';
+import { BirdDetails } from '@/src/components/species/bird-details';
 
 type Props = {
   observation: ObservationProperties | null;
@@ -40,6 +41,7 @@ export function ObservationSheet({ observation, hex, truncated, onClose }: Props
             </dl>
             {observation.photoAttribution && <p className="photo-credit">Foto: {observation.photoAttribution} · {observation.photoLicense}</p>}
             <a className="inat-link" href={observation.observationUrl} target="_blank" rel="noreferrer">Ver registro en {observation.sourceLabel} <ArrowIcon /></a>
+            {observation.iconicGroup === 'birds' && <BirdDetails key={observation.scientificName} name={observation.scientificName} />}
           </div>
         </>
       ) : hex ? (

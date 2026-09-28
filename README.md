@@ -82,3 +82,13 @@ docker run --rm -p 3000:3000 --env-file .env islas-vivas
 ```
 
 La imagen multi-stage ejecuta la salida standalone como usuario sin privilegios.
+
+## Aves: eBird y fichas complementarias
+
+Configura `EBIRD_API_KEY` únicamente en `.env.local` (o en las variables privadas del servidor) y reinicia Next.js. `.env.example` contiene solo el nombre de la variable; no debe contener credenciales.
+
+El selector permite combinar o aislar iNaturalist, GBIF y eBird. eBird consulta `/v2/data/obs/geo/recent` con la clave en `X-eBirdApiToken`, radios de 0.5 a 10 km, `back=30` y observaciones validadas. Cada radio se consulta por separado; las consultas concurrentes del mismo radio comparten una caché de cinco minutos. Los resultados son los avistamientos recientes por especie, no todas las observaciones ni una medida de abundancia. Las fechas filtran esa muestra; no recuperan registros históricos. Otros grupos taxonómicos devuelven cero registros eBird sin consultar la API. Los errores parciales conservan las fuentes disponibles y muestran un aviso.
+
+Las fichas de aves incluyen **Galería, sonidos y conservación** y consultan iNaturalist solo al abrirlas. La correspondencia exige un nombre científico exacto y un taxón de aves activo; una discrepancia taxonómica no se resuelve por semejanza. Se muestran fotos y audios reutilizables con créditos, licencia y enlace original. Los medios ilustran la especie y pueden proceder de otras regiones; no son evidencia local. Las evaluaciones conservan autoridad, categoría y ámbito geográfico; no encontrar una evaluación no significa ausencia de riesgo.
+
+eBird API no entrega estos medios ni categorías de amenaza; las fichas eBird enlazan también a la página de la especie para explorar Macaulay Library. Documentación: [eBird API](https://documenter.getpostman.com/view/664302/S1ENwy59), [datos y medios eBird](https://support.ebird.org/en/support/solutions/articles/48000838205-download-ebird-data), [iNaturalist API](https://api.inaturalist.org/v1/docs/).
